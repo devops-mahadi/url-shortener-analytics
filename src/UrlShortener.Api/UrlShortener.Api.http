@@ -1,6 +1,75 @@
-@UrlShortener.Api_HostAddress = http://localhost:5259
+@HostAddress = http://localhost:5000
 
-GET {{UrlShortener.Api_HostAddress}}/weatherforecast/
+### Health check
+GET {{HostAddress}}/health
+
+###
+
+### Shorten a URL (auto-generated code)
+POST {{HostAddress}}/api/v1/shorten
+Content-Type: application/json
+
+{
+  "originalUrl": "https://www.example.com/very/long/path/to/some/page"
+}
+
+###
+
+### Shorten a URL (custom code)
+POST {{HostAddress}}/api/v1/shorten
+Content-Type: application/json
+
+{
+  "originalUrl": "https://www.github.com/dotnet/aspnetcore",
+  "customCode": "dotnet"
+}
+
+###
+
+### Shorten a URL (invalid URL — expect 400 ProblemDetails)
+POST {{HostAddress}}/api/v1/shorten
+Content-Type: application/json
+
+{
+  "originalUrl": "not-a-valid-url"
+}
+
+###
+
+### Shorten a URL (duplicate custom code — expect 409)
+POST {{HostAddress}}/api/v1/shorten
+Content-Type: application/json
+
+{
+  "originalUrl": "https://www.google.com",
+  "customCode": "dotnet"
+}
+
+###
+
+### Redirect (follow to original URL)
+GET {{HostAddress}}/dotnet
+
+###
+
+### Get stats for a short code
+GET {{HostAddress}}/api/v1/stats/dotnet
 Accept: application/json
+
+###
+
+### Get stats for unknown code (expect 404)
+GET {{HostAddress}}/api/v1/stats/doesnotexist
+Accept: application/json
+
+###
+
+### Soft delete a short URL
+DELETE {{HostAddress}}/api/v1/links/dotnet
+
+###
+
+### Redirect after delete (expect 404)
+GET {{HostAddress}}/dotnet
 
 ###

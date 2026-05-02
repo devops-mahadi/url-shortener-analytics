@@ -34,6 +34,16 @@ public class LinkRepository : ILinkRepository
             .AnyAsync(cancellationToken);
     }
 
+    public async Task<bool> SoftDeleteAsync(string shortCode, CancellationToken cancellationToken = default)
+    {
+        var update = Builders<Link>.Update.Set(l => l.IsDeleted, true);
+        var result = await _links.UpdateOneAsync(
+            l => l.ShortCode == shortCode && !l.IsDeleted,
+            update,
+            cancellationToken: cancellationToken);
+        return result.ModifiedCount > 0;
+    }
+
     public async Task EnsureIndexesAsync(CancellationToken cancellationToken = default)
     {
         var indexKeys = Builders<Link>.IndexKeys.Ascending(l => l.ShortCode);

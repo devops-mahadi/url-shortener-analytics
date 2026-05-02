@@ -78,6 +78,7 @@ public class Program
                 options.SubstituteApiVersionInUrl = true;
             });
 
+            builder.Services.AddProblemDetails();
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
 
@@ -88,6 +89,8 @@ public class Program
                 app.MapOpenApi();
             }
 
+            app.UseExceptionHandler();
+            app.UseStatusCodePages();
             app.UseHttpsRedirection();
             app.UseAuthorization();
 

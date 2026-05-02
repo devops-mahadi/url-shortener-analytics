@@ -42,7 +42,12 @@ public class LinksController : ControllerBase
         var validationResult = await _validator.ValidateAsync(request, cancellationToken);
         if (!validationResult.IsValid)
         {
-            return BadRequest(validationResult.Errors);
+            return ValidationProblem(new ValidationProblemDetails(
+                validationResult.Errors
+                    .GroupBy(e => e.PropertyName)
+                    .ToDictionary(
+                        g => g.Key,
+                        g => g.Select(e => e.ErrorMessage).ToArray())));
         }
 
         // Determine short code
@@ -86,6 +91,20 @@ public class LinksController : ControllerBase
         };
 
         return Ok(response);
+    }
+
+    [HttpDelete("links/{shortCode}")]
+    public async Task<IActionResult> DeleteLink(string shortCode, CancellationToken cancellationToken)
+    {
+        var deleted = await _linkRepository.SoftDeleteAsync(shortCode, cancellationToken);
+        if (!deleted)
+        {
+            _logger.LogWarning("Delete requested for unknown short code: {ShortCode}", shortCode);
+            return NotFound();
+        }
+
+        _logger.LogInformation("Soft deleted short URL: {ShortCode}", shortCode);
+        return NoContent();
     }
 
     private async Task<string> GenerateUniqueShortCodeAsync(CancellationToken cancellationToken)
