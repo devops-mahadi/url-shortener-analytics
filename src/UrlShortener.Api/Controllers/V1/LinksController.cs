@@ -50,36 +50,47 @@ public class LinksController : ControllerBase
                         g => g.Select(e => e.ErrorMessage).ToArray())));
         }
 
-        // Determine short code
         string shortCode;
+
         if (!string.IsNullOrWhiteSpace(request.CustomCode))
         {
             shortCode = request.CustomCode;
-
-            // Check if custom code already exists
             if (await _linkRepository.ShortCodeExistsAsync(shortCode, cancellationToken))
-            {
                 return Conflict(new { error = "Custom code already exists" });
-            }
         }
         else
         {
-            // Generate unique short code
+            // Dedup: return existing entry for same URL + campaign combo
+            var existing = await _linkRepository.GetByOriginalUrlAsync(
+                request.OriginalUrl, request.Campaign, cancellationToken);
+
+            if (existing != null)
+            {
+                var existingBaseUrl = $"{Request.Scheme}://{Request.Host}";
+                return Ok(new ShortenUrlResponse
+                {
+                    ShortCode = existing.ShortCode,
+                    ShortUrl = $"{existingBaseUrl}/{existing.ShortCode}",
+                    OriginalUrl = existing.OriginalUrl,
+                });
+            }
+
             shortCode = await GenerateUniqueShortCodeAsync(cancellationToken);
         }
 
-        // Create link
         var link = new Link
         {
             ShortCode = shortCode,
             OriginalUrl = request.OriginalUrl,
+            Campaign = request.Campaign,
             CreatedAt = DateTime.UtcNow,
-            IsDeleted = false
+            IsDeleted = false,
         };
 
         await _linkRepository.CreateAsync(link, cancellationToken);
 
-        _logger.LogInformation("Created short URL: {ShortCode} -> {OriginalUrl}", shortCode, request.OriginalUrl);
+        _logger.LogInformation("Created short URL: {ShortCode} -> {OriginalUrl} (campaign: {Campaign})",
+            shortCode, request.OriginalUrl, request.Campaign ?? "none");
 
         // Build response
         var baseUrl = $"{Request.Scheme}://{Request.Host}";

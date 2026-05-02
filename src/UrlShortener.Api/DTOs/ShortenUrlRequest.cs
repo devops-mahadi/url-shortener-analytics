@@ -4,4 +4,5 @@ public class ShortenUrlRequest
 {
     public string OriginalUrl { get; set; } = string.Empty;
     public string? CustomCode { get; set; }
+    public string? Campaign { get; set; }
 }

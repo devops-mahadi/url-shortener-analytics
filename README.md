@@ -107,6 +107,8 @@ curl http://localhost:8080/health
 
 ### Shorten a URL (auto-generated code)
 
+Calling with the same URL multiple times returns the same short code — no duplicate entries.
+
 ```bash
 curl -X POST http://localhost:8080/api/v1/shorten \
   -H "Content-Type: application/json" \
@@ -123,6 +125,22 @@ Response:
 }
 ```
 
+### Shorten a URL with campaign tracking
+
+Use `campaign` to create separate short codes for the same URL — useful for tracking different traffic sources. Each unique `(originalUrl, campaign)` combination gets its own entry.
+
+```bash
+curl -X POST http://localhost:8080/api/v1/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"originalUrl": "https://www.example.com", "campaign": "email"}'
+
+curl -X POST http://localhost:8080/api/v1/shorten \
+  -H "Content-Type: application/json" \
+  -d '{"originalUrl": "https://www.example.com", "campaign": "twitter"}'
+```
+
+Each returns a different short code with independent click analytics.
+
 ### Shorten a URL (custom code)
 
 ```bash
@@ -131,7 +149,7 @@ curl -X POST http://localhost:8080/api/v1/shorten \
   -d '{"originalUrl": "https://github.com/dotnet/aspnetcore", "customCode": "dotnet"}'
 ```
 
-Returns `409 Conflict` if `customCode` already exists.
+Returns `409 Conflict` if `customCode` already exists. Custom codes ignore deduplication — always creates a new entry.
 
 ### Redirect
 
@@ -210,6 +228,7 @@ curl -X POST http://localhost:8080/api/v1/shorten \
 | `originalUrl` | string | |
 | `createdAt` | DateTime | UTC |
 | `createdBy` | string? | Nullable, reserved for auth |
+| `campaign` | string? | Optional campaign tag for dedup grouping |
 | `isDeleted` | bool | Soft delete flag |
 
 ### `clicks` collection

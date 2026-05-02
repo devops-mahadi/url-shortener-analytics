@@ -21,6 +21,13 @@ public class LinkRepository : ILinkRepository
             .FirstOrDefaultAsync(cancellationToken);
     }
 
+    public async Task<Link?> GetByOriginalUrlAsync(string originalUrl, string? campaign, CancellationToken cancellationToken = default)
+    {
+        return await _links
+            .Find(l => l.OriginalUrl == originalUrl && l.Campaign == campaign && !l.IsDeleted)
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<Link> CreateAsync(Link link, CancellationToken cancellationToken = default)
     {
         await _links.InsertOneAsync(link, cancellationToken: cancellationToken);
@@ -46,10 +53,13 @@ public class LinkRepository : ILinkRepository
 
     public async Task EnsureIndexesAsync(CancellationToken cancellationToken = default)
     {
-        var indexKeys = Builders<Link>.IndexKeys.Ascending(l => l.ShortCode);
-        var indexOptions = new CreateIndexOptions { Unique = true };
-        var indexModel = new CreateIndexModel<Link>(indexKeys, indexOptions);
+        var shortCodeIndex = new CreateIndexModel<Link>(
+            Builders<Link>.IndexKeys.Ascending(l => l.ShortCode),
+            new CreateIndexOptions { Unique = true });
 
-        await _links.Indexes.CreateOneAsync(indexModel, cancellationToken: cancellationToken);
+        var dedupIndex = new CreateIndexModel<Link>(
+            Builders<Link>.IndexKeys.Ascending(l => l.OriginalUrl).Ascending(l => l.Campaign));
+
+        await _links.Indexes.CreateManyAsync([shortCodeIndex, dedupIndex], cancellationToken);
     }
 }

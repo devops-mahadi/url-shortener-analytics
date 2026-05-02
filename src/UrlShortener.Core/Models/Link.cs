@@ -21,6 +21,9 @@ public class Link
     [BsonElement("createdBy")]
     public string? CreatedBy { get; set; }
 
+    [BsonElement("campaign")]
+    public string? Campaign { get; set; }
+
     [BsonElement("isDeleted")]
     public bool IsDeleted { get; set; }
 }

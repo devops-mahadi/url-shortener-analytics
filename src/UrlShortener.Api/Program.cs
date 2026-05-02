@@ -92,10 +92,11 @@ public class Program
             app.UseExceptionHandler();
             app.UseStatusCodePages();
             app.UseHttpsRedirection();
-            app.UseAuthorization();
 
-            // Map endpoints
-            app.MapHealthChecks("/health");
+            app.UseWhen(
+                ctx => ctx.Request.Path.StartsWithSegments("/health"),
+                branch => branch.UseHealthChecks("/health"));
+
             app.MapControllers();
             Log.Information("UrlShortener API started successfully");
             app.Run();
