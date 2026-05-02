@@ -1,8 +1,16 @@
+using Asp.Versioning;
+
+using FluentValidation;
+
 using MongoDB.Driver;
 
 using Serilog;
 
+using UrlShortener.Api.Repositories;
+using UrlShortener.Api.Services;
 using UrlShortener.Core.Configuration;
+using UrlShortener.Core.Repositories;
+using UrlShortener.Core.Services;
 
 public class Program
 {
@@ -46,7 +54,30 @@ public class Program
                     timeout: TimeSpan.FromSeconds(5),
                     tags: new[] { "db", "mongo" }
                 );
-            
+
+            // Register application services
+            builder.Services.AddSingleton<ShortCodeGenerator>();
+            builder.Services.AddScoped<ILinkRepository, LinkRepository>();
+            builder.Services.AddScoped<IClickRepository, ClickRepository>();
+
+            // Register hosted services
+            builder.Services.AddHostedService<MongoDbIndexService>();
+
+            // Register FluentValidation
+            builder.Services.AddValidatorsFromAssemblyContaining<Program>();
+
+            // Add API Versioning
+            builder.Services.AddApiVersioning(options =>
+            {
+                options.DefaultApiVersion = new Asp.Versioning.ApiVersion(1, 0);
+                options.AssumeDefaultVersionWhenUnspecified = true;
+                options.ReportApiVersions = true;
+            }).AddApiExplorer(options =>
+            {
+                options.GroupNameFormat = "'v'VVV";
+                options.SubstituteApiVersionInUrl = true;
+            });
+
             builder.Services.AddControllers();
             builder.Services.AddOpenApi();
 
@@ -56,8 +87,11 @@ public class Program
             {
                 app.MapOpenApi();
             }
+
             app.UseHttpsRedirection();
             app.UseAuthorization();
+
+            // Map endpoints
             app.MapHealthChecks("/health");
             app.MapControllers();
             Log.Information("UrlShortener API started successfully");
