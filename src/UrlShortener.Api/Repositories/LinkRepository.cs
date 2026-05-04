@@ -1,4 +1,5 @@
 using MongoDB.Driver;
+using MongoDB.Driver.Linq;
 
 using UrlShortener.Core.Models;
 using UrlShortener.Core.Repositories;
@@ -61,5 +62,15 @@ public class LinkRepository : ILinkRepository
             Builders<Link>.IndexKeys.Ascending(l => l.OriginalUrl).Ascending(l => l.Campaign));
 
         await _links.Indexes.CreateManyAsync([shortCodeIndex, dedupIndex], cancellationToken);
+    }
+
+    public async Task<IEnumerable<Link>> GetAllLinksAsync(CancellationToken cancellationToken = default)
+    {
+        return await _links.AsQueryable().ToListAsync(cancellationToken);
+    }
+
+    public async Task<IEnumerable<string>> GetAllShortCodesAsync(CancellationToken cancellationToken = default)
+    {
+        return await _links.AsQueryable().Select(l => l.ShortCode).ToListAsync(cancellationToken);
     }
 }

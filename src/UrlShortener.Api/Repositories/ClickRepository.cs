@@ -74,4 +74,14 @@ public class ClickRepository : IClickRepository
             new CreateIndexModel<Click>(compoundIndex),
             cancellationToken: cancellationToken);
     }
+
+    public async Task<IEnumerable<ClickStats>> GetAllClicksAsync(IEnumerable<string> shortCodes, CancellationToken cancellationToken = default)
+    {
+        List<ClickStats> clickStatsList = new();
+        foreach (string shortCode in shortCodes)
+        {
+            clickStatsList.Add(await GetStatsAsync(shortCode,  cancellationToken));
+        }
+        return clickStatsList;
+    }
 }

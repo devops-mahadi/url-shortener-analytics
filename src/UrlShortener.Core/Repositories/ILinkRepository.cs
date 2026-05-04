@@ -10,4 +10,6 @@ public interface ILinkRepository
     Task<bool> ShortCodeExistsAsync(string shortCode, CancellationToken cancellationToken = default);
     Task<bool> SoftDeleteAsync(string shortCode, CancellationToken cancellationToken = default);
     Task EnsureIndexesAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<Link>> GetAllLinksAsync(CancellationToken cancellationToken = default);
+    Task<IEnumerable<string>> GetAllShortCodesAsync(CancellationToken cancellationToken = default);
 }

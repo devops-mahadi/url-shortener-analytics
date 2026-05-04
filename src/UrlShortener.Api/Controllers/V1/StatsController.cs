@@ -50,4 +50,34 @@ public class StatsController : ControllerBase
 
         return Ok(response);
     }
+    
+    [HttpGet("stats/all")]
+    public async Task<ActionResult<IEnumerable<StatsResponse>>> GetStats(CancellationToken cancellationToken)
+    {
+        var shortCodes = await _linkRepository.GetAllShortCodesAsync(cancellationToken);
+        IEnumerable<string> enumerable = shortCodes.ToList();
+        if (!enumerable.Any())
+        {
+            _logger.LogWarning("No record found.");
+            return NotFound();
+        }
+
+        var stats = await _clickRepository.GetAllClicksAsync(enumerable, cancellationToken);
+
+        List<StatsResponse> responses = new();
+        foreach (ClickStats stat in stats)
+        {
+            var response = new StatsResponse
+            {
+                TotalClicks = stat.TotalClicks,
+                ClicksByDay = stat.ClicksByDay.Select(d => new DailyClickDto(d.Date, d.Count)).ToList(),
+                TopReferrers = stat.TopReferrers.Select(r => new ReferrerCountDto(r.Referrer, r.Count)).ToList(),
+                CountryBreakdown = stat.CountryBreakdown.Select(c => new CountryCountDto(c.Country, c.Count)).ToList(),
+                DeviceBreakdown = stat.DeviceBreakdown.Select(d => new DeviceCountDto(d.Device, d.Count)).ToList(),
+            };
+            responses.Add(response);
+        }
+
+        return Ok(responses);
+    }
 }

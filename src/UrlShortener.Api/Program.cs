@@ -54,7 +54,7 @@ public class Program
                     timeout: TimeSpan.FromSeconds(5),
                     tags: new[] { "db", "mongo" }
                 );
-
+ 
             // Register application services
             builder.Services.AddSingleton<ShortCodeGenerator>();
             builder.Services.AddScoped<ILinkRepository, LinkRepository>();

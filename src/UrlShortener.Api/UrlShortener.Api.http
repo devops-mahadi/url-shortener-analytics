@@ -58,6 +58,12 @@ Accept: application/json
 
 ###
 
+### Get stats for all short codes
+GET {{HostAddress}}/api/v1/stats/all
+Accept: application/json
+
+###
+
 ### Get stats for unknown code (expect 404)
 GET {{HostAddress}}/api/v1/stats/doesnotexist
 Accept: application/json

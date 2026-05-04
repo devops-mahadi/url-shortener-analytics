@@ -95,6 +95,45 @@ public class StatsIntegrationTests : IntegrationTestBase
     }
 
     [Fact]
+    public async Task GetAllStats_WithNoLinks_ShouldReturnNotFound()
+    {
+        var response = await Client.GetAsync("/api/v1/stats/all");
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+    }
+
+    [Fact]
+    public async Task GetAllStats_WithMultipleLinks_ShouldReturnStatsForEach()
+    {
+        await Client.PostAsJsonAsync("/api/v1/shorten",
+            new ShortenUrlRequest { OriginalUrl = "https://www.example.com", CustomCode = "allstats1" });
+        await Client.PostAsJsonAsync("/api/v1/shorten",
+            new ShortenUrlRequest { OriginalUrl = "https://www.github.com", CustomCode = "allstats2" });
+
+        using var scope = Factory.Services.CreateScope();
+        var clickRepo = scope.ServiceProvider.GetRequiredService<IClickRepository>();
+
+        await clickRepo.LogClickAsync(new Click
+        {
+            ShortCode = "allstats1",
+            ClickedAt = DateTime.UtcNow,
+            IpAddress = "1.2.3.4",
+            Country = "US",
+            UserAgent = "TestAgent",
+            Referrer = "https://google.com",
+            Device = "Desktop",
+        });
+
+        var response = await Client.GetAsync("/api/v1/stats/all");
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var stats = await response.Content.ReadFromJsonAsync<List<StatsResponse>>();
+        stats.Should().NotBeNull();
+        stats!.Should().HaveCount(2);
+        stats.Sum(s => s.TotalClicks).Should().Be(1);
+    }
+
+    [Fact]
     public async Task GetStats_ClicksByDay_ShouldGroupByDate()
     {
         const string code = "daystats";

@@ -1,4 +1,4 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:10.0-alpine AS build
 WORKDIR /src
 
 COPY src/UrlShortener.Core/UrlShortener.Core.csproj src/UrlShortener.Core/
@@ -8,10 +8,10 @@ RUN dotnet restore src/UrlShortener.Api/UrlShortener.Api.csproj
 COPY src/ src/
 RUN dotnet publish src/UrlShortener.Api/UrlShortener.Api.csproj -c Release -o /app/publish --no-restore
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0 AS runtime
+FROM mcr.microsoft.com/dotnet/aspnet:10.0-alpine AS runtime
 WORKDIR /app
 
-RUN addgroup --system appgroup && adduser --system --ingroup appgroup appuser
+RUN addgroup -S appgroup && adduser -S -G appgroup appuser
 USER appuser
 
 COPY --from=build /app/publish .

@@ -43,22 +43,23 @@ public class RedirectController : ControllerBase
         var userAgentString = Request.Headers.UserAgent.ToString();
         var referrer = Request.Headers.Referer.ToString();
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString() ?? string.Empty;
-
+        var device = ParseDevice(userAgentString);
+        var click = new Click
+        {
+            ShortCode = shortCode,
+            ClickedAt = DateTime.UtcNow,
+            IpAddress = ipAddress,
+            Country = "Unknown",
+            UserAgent = userAgentString,
+            Referrer = referrer,
+            Device = device,
+        };
+        
+        // fire and forget
         _ = Task.Run(async () =>
         {
             try
             {
-                var device = ParseDevice(userAgentString);
-                var click = new Click
-                {
-                    ShortCode = shortCode,
-                    ClickedAt = DateTime.UtcNow,
-                    IpAddress = ipAddress,
-                    Country = "Unknown",
-                    UserAgent = userAgentString,
-                    Referrer = referrer,
-                    Device = device,
-                };
                 await _clickRepository.LogClickAsync(click);
             }
             catch (Exception ex)
